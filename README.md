@@ -2,6 +2,64 @@
 
 Production-grade Terraform module for deploying Amazon EKS clusters with managed node groups, Fargate profiles, IRSA, cluster add-ons, and the EKS Access API.
 
+## Architecture Diagram
+
+```mermaid
+flowchart TB
+    subgraph ControlPlane["EKS Control Plane"]
+        API["Kubernetes API Server\n(AWS Managed, Multi-AZ)"]
+        OIDC["OIDC Provider\n(IRSA)"]
+        KMS["KMS Key\n(Envelope Encryption)"]
+    end
+
+    subgraph Workers["Worker Nodes"]
+        subgraph MNG["Managed Node Groups"]
+            SYSTEM["System Nodes\n(On-Demand)"]
+            APP["App Nodes\n(On-Demand)"]
+            SPOT["Spot Nodes\n(Cost-Optimized)"]
+            GPU["GPU Nodes\n(g5.2xlarge)"]
+        end
+        FARGATE["Fargate Profiles\n(Serverless Pods)"]
+    end
+
+    subgraph Addons["EKS Managed Add-ons"]
+        VPCCNI["vpc-cni"]
+        COREDNS["coredns"]
+        PROXY["kube-proxy"]
+        EBSCSI["ebs-csi-driver"]
+        PODID["pod-identity-agent"]
+    end
+
+    subgraph Security["Security"]
+        CLUSTERSG["Cluster SG\n(API Access)"]
+        NODESG["Node SG\n(Workers)"]
+        ACCESS["Access Entries\n(AuthN/AuthZ)"]
+    end
+
+    subgraph Logging["Observability"]
+        CWLOGS["CloudWatch Logs\n(api/audit/authenticator\ncontroller/scheduler)"]
+    end
+
+    API --> OIDC
+    API --> KMS
+    API --> SYSTEM
+    API --> APP
+    API --> SPOT
+    API --> GPU
+    API --> FARGATE
+    Addons --> Workers
+    CLUSTERSG --> API
+    NODESG --> Workers
+    ACCESS --> API
+    Workers --> CWLOGS
+
+    style ControlPlane fill:#0078D4,color:#fff
+    style Workers fill:#FF9900,color:#fff
+    style Addons fill:#3F8624,color:#fff
+    style Security fill:#DD344C,color:#fff
+    style Logging fill:#8C4FFF,color:#fff
+```
+
 ## Architecture
 
 ```
