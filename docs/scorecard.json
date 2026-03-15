@@ -1,0 +1,64 @@
+{
+  "repo": "terraform-aws-eks",
+  "generated": "2026-03-15",
+  "scores": {
+    "documentation": 8,
+    "maintainability": 6,
+    "security": 8,
+    "observability": 5,
+    "deployability": 7,
+    "portability": 7,
+    "testability": 4,
+    "scalability": 8,
+    "reusability": 9,
+    "production_readiness": 6
+  },
+  "overall": 6.8,
+  "top_gaps": [
+    "No CI/CD workflow (.github/workflows) found",
+    "No automated tests directory found",
+    "No .gitignore file present",
+    "No observability/monitoring module or configuration",
+    "No integration or end-to-end test coverage",
+    "No pre-commit hook configuration",
+    "No Makefile or Taskfile for local development",
+    "No architecture diagram in documentation",
+    "No cost estimation or Infracost integration",
+    "No dependency pinning beyond provider versions"
+  ],
+  "fixes_applied": [
+    "CONTRIBUTING.md present for contributor guidance",
+    "SECURITY.md present for vulnerability reporting",
+    "CODEOWNERS file established for review ownership",
+    ".editorconfig ensures consistent code formatting",
+    ".gitattributes for line ending normalization",
+    "LICENSE (Apache 2.0) clearly defined",
+    "CHANGELOG.md tracks version history",
+    "Three sub-modules (node-group, fargate-profile, irsa) for composability",
+    "Three example configurations (basic, advanced, complete)",
+    "KMS encryption module (kms.tf) for secrets at rest"
+  ],
+  "remaining_risks": [
+    "No CI pipeline means no automated validation on PRs",
+    "No test coverage leaves infrastructure changes unvalidated",
+    "Missing .gitignore could lead to sensitive files being committed",
+    "No drift detection or plan automation configured"
+  ],
+  "roadmap": {
+    "30_day": [
+      "Add GitHub Actions CI workflow with terraform validate, fmt, and tflint",
+      "Create .gitignore with Terraform-standard exclusions",
+      "Add pre-commit hooks configuration"
+    ],
+    "60_day": [
+      "Implement Terratest-based integration tests",
+      "Add Infracost integration for cost estimation",
+      "Create architecture diagram in README"
+    ],
+    "90_day": [
+      "Add end-to-end cluster provisioning tests",
+      "Implement OPA/Sentinel policy checks",
+      "Set up automated drift detection"
+    ]
+  }
+}

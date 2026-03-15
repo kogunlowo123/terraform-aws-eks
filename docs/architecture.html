@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>terraform-aws-eks | Architecture</title>
+<style>
+:root{--ink:#0b0c0b;--accent:#c8420a;--surface:#141514;--border:#2a2b2a;--text:#d4d4d4;--muted:#8a8a8a;--card:#1a1b1a;--green:#2ea043;--blue:#4493f8;--yellow:#d29922;--red:#f85149}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--ink);color:var(--text);font-family:'SF Mono','Cascadia Code','Fira Code',monospace;font-size:14px;line-height:1.7}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.container{max-width:1200px;margin:0 auto;padding:2rem}
+header{border-bottom:2px solid var(--accent);padding-bottom:1.5rem;margin-bottom:2.5rem}
+header h1{font-size:1.8rem;color:#fff;letter-spacing:-0.5px}
+header .subtitle{color:var(--muted);margin-top:0.3rem;font-size:0.95rem}
+h2{font-size:1.3rem;color:var(--accent);margin:2.5rem 0 1rem;padding-bottom:0.4rem;border-bottom:1px solid var(--border)}
+h3{font-size:1rem;color:#fff;margin:1.5rem 0 0.5rem}
+.badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:0.75rem;font-weight:600;margin-right:0.4rem}
+.badge-green{background:rgba(46,160,67,0.15);color:var(--green);border:1px solid rgba(46,160,67,0.3)}
+.badge-blue{background:rgba(68,147,248,0.15);color:var(--blue);border:1px solid rgba(68,147,248,0.3)}
+.badge-yellow{background:rgba(210,153,34,0.15);color:var(--yellow);border:1px solid rgba(210,153,34,0.3)}
+.badge-red{background:rgba(248,81,73,0.15);color:var(--red);border:1px solid rgba(248,81,73,0.3)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin:1rem 0}
+.card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:1.2rem}
+.card .label{font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.card .value{font-size:1.4rem;color:#fff;margin-top:0.3rem;font-weight:700}
+.card .detail{font-size:0.8rem;color:var(--muted);margin-top:0.2rem}
+.arch-diagram{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:2rem;margin:1rem 0;overflow-x:auto}
+.flow{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:0.5rem}
+.flow-box{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:0.6rem 1rem;text-align:center;font-size:0.8rem;min-width:120px}
+.flow-box.primary{border-color:var(--accent);color:var(--accent)}
+.flow-box.green{border-color:var(--green);color:var(--green)}
+.flow-box.blue{border-color:var(--blue);color:var(--blue)}
+.flow-box.yellow{border-color:var(--yellow);color:var(--yellow)}
+.flow-box.red{border-color:var(--red);color:var(--red)}
+.flow-arrow{color:var(--muted);font-size:1.2rem}
+.flow-row{display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;justify-content:center;margin:0.5rem 0}
+table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:0.85rem}
+th,td{text-align:left;padding:0.5rem 0.8rem;border-bottom:1px solid var(--border)}
+th{color:var(--muted);font-weight:600;text-transform:uppercase;font-size:0.7rem;letter-spacing:1px}
+td code{background:var(--surface);padding:1px 5px;border-radius:3px;font-size:0.8rem}
+.checklist{list-style:none;padding:0}
+.checklist li{padding:0.3rem 0;padding-left:1.5rem;position:relative}
+.checklist li::before{content:"[ ]";position:absolute;left:0;color:var(--muted);font-size:0.8rem}
+.section-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1rem}
+.info-block{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:1.2rem;margin:0.5rem 0}
+.info-block h4{color:var(--accent);margin-bottom:0.5rem;font-size:0.9rem}
+.info-block ul{padding-left:1.2rem;color:var(--muted);font-size:0.85rem}
+.info-block li{margin:0.2rem 0}
+footer{margin-top:3rem;padding-top:1.5rem;border-top:1px solid var(--border);color:var(--muted);font-size:0.75rem;text-align:center}
+.exec-summary{background:var(--surface);border-left:3px solid var(--accent);padding:1.2rem 1.5rem;margin:1rem 0;border-radius:0 6px 6px 0;font-size:0.9rem;line-height:1.8}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>terraform-aws-eks</h1>
+<div class="subtitle">Production-grade EKS cluster with managed node groups, Fargate, IRSA, add-ons, and EKS Access API</div>
+<div style="margin-top:0.8rem">
+<span class="badge badge-green">Terraform &ge; 1.5.0</span>
+<span class="badge badge-blue">AWS Provider &ge; 5.20.0</span>
+<span class="badge badge-yellow">Kubernetes 1.25+</span>
+<span class="badge badge-red">Encryption Enabled</span>
+</div>
+</header>
+
+<h2>Executive Summary</h2>
+<div class="exec-summary">
+This module provisions a fully managed Amazon EKS cluster with support for multiple managed node groups (ON_DEMAND and SPOT), Fargate profiles for serverless pods, IAM Roles for Service Accounts (IRSA) via OIDC federation, managed add-ons (vpc-cni, coredns, kube-proxy, ebs-csi-driver, pod-identity-agent), and the EKS Access API for fine-grained authentication and authorization. Security hardening includes KMS envelope encryption for secrets, IMDSv2 enforcement, private endpoint access, encrypted EBS volumes, and least-privilege IAM roles per node group. CloudWatch Logs captures all five control plane log types with configurable retention.
+</div>
+
+<h2>Overview</h2>
+<div class="cards">
+<div class="card"><div class="label">Resources Created</div><div class="value">12+</div><div class="detail">Cluster, Node Groups, Fargate, SGs, IAM, OIDC, KMS, CW Logs, Add-ons, Access Entries</div></div>
+<div class="card"><div class="label">Input Variables</div><div class="value">16</div><div class="detail">cluster_name, cluster_version, vpc_id, subnet_ids, managed_node_groups, etc.</div></div>
+<div class="card"><div class="label">Outputs</div><div class="value">17</div><div class="detail">cluster_id, cluster_endpoint, oidc_provider_arn, node_group_arns, kms_key_arn, etc.</div></div>
+<div class="card"><div class="label">Submodules</div><div class="value">3</div><div class="detail">node-group, fargate-profile, irsa</div></div>
+</div>
+
+<h2>Architecture Diagram</h2>
+<div class="arch-diagram">
+<div class="flow-row">
+<div class="flow-box primary">EKS Control Plane<br><small>API Server (Multi-AZ)</small></div>
+</div>
+<div class="flow-row">
+<span class="flow-arrow">&darr;</span>
+</div>
+<div class="flow-row">
+<div class="flow-box blue">OIDC Provider<br><small>IRSA</small></div>
+<div class="flow-box red">KMS Key<br><small>Envelope Encryption</small></div>
+<div class="flow-box yellow">Access Entries<br><small>AuthN / AuthZ</small></div>
+</div>
+<div class="flow-row">
+<span class="flow-arrow">&darr;</span>
+</div>
+<div class="flow-row">
+<div class="flow-box green">System Nodes<br><small>ON_DEMAND</small></div>
+<div class="flow-box green">App Nodes<br><small>ON_DEMAND</small></div>
+<div class="flow-box yellow">Spot Nodes<br><small>Cost-Optimized</small></div>
+<div class="flow-box blue">GPU Nodes<br><small>g5.2xlarge</small></div>
+<div class="flow-box primary">Fargate<br><small>Serverless Pods</small></div>
+</div>
+<div class="flow-row">
+<span class="flow-arrow">&darr;</span>
+</div>
+<div class="flow-row">
+<div class="flow-box green">vpc-cni</div>
+<div class="flow-box green">coredns</div>
+<div class="flow-box green">kube-proxy</div>
+<div class="flow-box green">ebs-csi-driver</div>
+<div class="flow-box green">pod-identity-agent</div>
+</div>
+<div class="flow-row">
+<span class="flow-arrow">&darr;</span>
+</div>
+<div class="flow-row">
+<div class="flow-box red">Cluster SG<br><small>API Access</small></div>
+<div class="flow-box red">Node SG<br><small>Workers</small></div>
+<div class="flow-box blue">CloudWatch Logs<br><small>5 Log Types</small></div>
+</div>
+</div>
+
+<h2>Component Breakdown</h2>
+<div class="section-grid">
+<div class="info-block">
+<h4>EKS Cluster</h4>
+<ul>
+<li>aws_eks_cluster with configurable K8s version (1.25+)</li>
+<li>Private + public endpoint access control</li>
+<li>API_AND_CONFIG_MAP authentication mode</li>
+<li>Envelope encryption for secrets via KMS</li>
+<li>All 5 control plane log types enabled by default</li>
+</ul>
+</div>
+<div class="info-block">
+<h4>Managed Node Groups</h4>
+<ul>
+<li>for_each driven -- deploy any number of groups</li>
+<li>Launch templates with IMDSv2, encrypted EBS (gp3)</li>
+<li>ON_DEMAND or SPOT capacity types</li>
+<li>AL2, AL2023, Bottlerocket, GPU AMI types</li>
+<li>Labels, taints, per-group IAM roles</li>
+</ul>
+</div>
+<div class="info-block">
+<h4>Fargate Profiles</h4>
+<ul>
+<li>Namespace-based pod selectors with label matching</li>
+<li>Dedicated pod execution IAM role</li>
+<li>Custom subnet placement support</li>
+</ul>
+</div>
+<div class="info-block">
+<h4>Add-ons &amp; Access</h4>
+<ul>
+<li>Managed add-ons: vpc-cni, coredns, kube-proxy, ebs-csi, pod-identity</li>
+<li>OVERWRITE / NONE / PRESERVE conflict resolution</li>
+<li>EKS Access Entries with policy associations</li>
+<li>Namespace-scoped or cluster-scoped access</li>
+</ul>
+</div>
+</div>
+
+<h2>Data Flow</h2>
+<div class="info-block">
+<ol style="padding-left:1.2rem;color:var(--muted);font-size:0.85rem">
+<li>Clients authenticate via EKS Access API or kubeconfig (OIDC/IAM)</li>
+<li>API requests hit the EKS Control Plane through private or public endpoint</li>
+<li>Control plane communicates with worker nodes via ENIs in control plane subnets</li>
+<li>Node groups launch EC2 instances via launch templates in private subnets</li>
+<li>Pods use IRSA for per-service-account AWS credentials via STS AssumeRoleWithWebIdentity</li>
+<li>Kubernetes secrets are encrypted at rest using KMS envelope encryption</li>
+<li>Control plane logs stream to CloudWatch Log Group with configurable retention</li>
+</ol>
+</div>
+
+<h2>Security Controls</h2>
+<table>
+<tr><th>Control</th><th>Implementation</th><th>Default</th></tr>
+<tr><td>Endpoint Access</td><td>Private-only API endpoint</td><td><code>private=true, public=false</code></td></tr>
+<tr><td>Secrets Encryption</td><td>KMS envelope encryption</td><td><code>enable_cluster_encryption=true</code></td></tr>
+<tr><td>IMDSv2</td><td>Launch template enforces <code>http_tokens=required</code></td><td>Always enforced</td></tr>
+<tr><td>EBS Encryption</td><td>KMS-encrypted gp3 volumes</td><td><code>encrypted=true</code></td></tr>
+<tr><td>IAM Isolation</td><td>Per-node-group IAM roles, Fargate execution role</td><td>Least-privilege</td></tr>
+<tr><td>IRSA</td><td>OIDC provider for pod-level IAM</td><td><code>enable_irsa=true</code></td></tr>
+<tr><td>Network</td><td>Cluster SG (API) + Node SG (workers)</td><td>Restricted ingress</td></tr>
+<tr><td>Audit Logging</td><td>All 5 control plane log types</td><td>90-day retention</td></tr>
+</table>
+
+<h2>Industry Adaptation</h2>
+<div class="section-grid">
+<div class="info-block">
+<h4>Financial Services</h4>
+<ul>
+<li>Enable KMS encryption + 365-day log retention</li>
+<li>Private endpoint only, no public access</li>
+<li>Dedicated system node group with taints</li>
+<li>Access Entries for RBAC compliance</li>
+</ul>
+</div>
+<div class="info-block">
+<h4>Healthcare / HIPAA</h4>
+<ul>
+<li>Customer-managed KMS keys for audit trail</li>
+<li>EBS encryption on all volumes</li>
+<li>VPC-isolated control plane subnets</li>
+<li>IMDSv2 enforcement prevents credential exfiltration</li>
+</ul>
+</div>
+<div class="info-block">
+<h4>SaaS / Multi-Tenant</h4>
+<ul>
+<li>Spot node groups for cost optimization</li>
+<li>Fargate profiles for tenant isolation</li>
+<li>Namespace-scoped access policies</li>
+<li>Multiple add-ons for platform services</li>
+</ul>
+</div>
+</div>
+
+<h2>Production Readiness Checklist</h2>
+<ul class="checklist">
+<li>Set <code>cluster_endpoint_public_access = false</code></li>
+<li>Enable KMS encryption for secrets and EBS</li>
+<li>Configure at least 2 subnets across AZs</li>
+<li>Use separate control_plane_subnet_ids (intra subnets)</li>
+<li>Deploy system node group with CriticalAddonsOnly taint</li>
+<li>Set <code>cluster_log_retention_days = 365</code> for compliance</li>
+<li>Configure IRSA for workload IAM</li>
+<li>Install managed add-ons (vpc-cni, coredns, kube-proxy, ebs-csi)</li>
+<li>Define access_entries for cluster RBAC</li>
+<li>Tag all resources with Environment, Team, ManagedBy</li>
+</ul>
+
+<h2>Configuration Reference</h2>
+<h3>Key Inputs</h3>
+<table>
+<tr><th>Variable</th><th>Type</th><th>Default</th><th>Description</th></tr>
+<tr><td><code>cluster_name</code></td><td>string</td><td>--</td><td>Name of the EKS cluster (required)</td></tr>
+<tr><td><code>cluster_version</code></td><td>string</td><td><code>1.29</code></td><td>Kubernetes version</td></tr>
+<tr><td><code>vpc_id</code></td><td>string</td><td>--</td><td>VPC for deployment</td></tr>
+<tr><td><code>subnet_ids</code></td><td>list(string)</td><td>--</td><td>Worker node subnets (min 2)</td></tr>
+<tr><td><code>managed_node_groups</code></td><td>map(object)</td><td><code>{}</code></td><td>Node group configs with instance types, scaling, taints</td></tr>
+<tr><td><code>fargate_profiles</code></td><td>map(object)</td><td><code>{}</code></td><td>Fargate profile selectors</td></tr>
+<tr><td><code>cluster_addons</code></td><td>map(object)</td><td><code>{}</code></td><td>EKS managed add-ons</td></tr>
+<tr><td><code>enable_cluster_encryption</code></td><td>bool</td><td><code>true</code></td><td>KMS envelope encryption</td></tr>
+<tr><td><code>enable_irsa</code></td><td>bool</td><td><code>true</code></td><td>OIDC provider for IRSA</td></tr>
+<tr><td><code>access_entries</code></td><td>map(object)</td><td><code>{}</code></td><td>EKS Access API entries</td></tr>
+</table>
+
+<h3>Key Outputs</h3>
+<table>
+<tr><th>Output</th><th>Description</th></tr>
+<tr><td><code>cluster_endpoint</code></td><td>API server endpoint URL</td></tr>
+<tr><td><code>cluster_certificate_authority_data</code></td><td>Base64 cluster CA cert</td></tr>
+<tr><td><code>oidc_provider_arn</code></td><td>OIDC provider ARN for IRSA</td></tr>
+<tr><td><code>node_group_arns</code></td><td>Map of node group ARNs</td></tr>
+<tr><td><code>cluster_security_group_id</code></td><td>Cluster SG ID</td></tr>
+<tr><td><code>kms_key_arn</code></td><td>Encryption key ARN</td></tr>
+</table>
+
+<h2>Deployment</h2>
+<div class="info-block">
+<pre style="color:var(--text);font-size:0.85rem">
+# Initialize
+terraform init
+
+# Plan
+terraform plan -var-file="production.tfvars"
+
+# Apply
+terraform apply -var-file="production.tfvars"
+
+# Configure kubectl
+aws eks update-kubeconfig --name &lt;cluster_name&gt; --region &lt;region&gt;
+
+# Verify
+kubectl get nodes
+kubectl get pods -A
+</pre>
+</div>
+
+<h2>Links &amp; References</h2>
+<div class="section-grid">
+<div class="info-block">
+<h4>AWS Documentation</h4>
+<ul>
+<li><a href="https://docs.aws.amazon.com/eks/latest/userguide/">EKS User Guide</a></li>
+<li><a href="https://aws.github.io/aws-eks-best-practices/">EKS Best Practices</a></li>
+<li><a href="https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html">Managed Node Groups</a></li>
+<li><a href="https://docs.aws.amazon.com/eks/latest/userguide/fargate.html">EKS Fargate</a></li>
+<li><a href="https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html">IRSA</a></li>
+</ul>
+</div>
+<div class="info-block">
+<h4>Module Resources</h4>
+<ul>
+<li><a href="../examples/basic/">Example: Basic</a></li>
+<li><a href="../examples/advanced/">Example: Advanced</a></li>
+<li><a href="../examples/complete/">Example: Complete</a></li>
+<li><a href="../modules/node-group/">Submodule: node-group</a></li>
+<li><a href="../modules/irsa/">Submodule: irsa</a></li>
+</ul>
+</div>
+</div>
+
+<footer>
+terraform-aws-eks | Architecture Documentation | Generated 2026-03-15 | MIT License
+</footer>
+</div>
+</body>
+</html>
