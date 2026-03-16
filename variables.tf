@@ -3,7 +3,7 @@
 ################################################################################
 
 variable "cluster_name" {
-  description = "Name of the EKS cluster"
+  description = "Name of the EKS cluster."
   type        = string
 
   validation {
@@ -18,7 +18,7 @@ variable "cluster_name" {
 }
 
 variable "cluster_version" {
-  description = "Kubernetes version for the EKS cluster"
+  description = "Kubernetes version for the EKS cluster."
   type        = string
   default     = "1.29"
 
@@ -29,7 +29,7 @@ variable "cluster_version" {
 }
 
 variable "vpc_id" {
-  description = "ID of the VPC where the cluster will be deployed"
+  description = "ID of the VPC where the cluster will be deployed."
   type        = string
 
   validation {
@@ -39,7 +39,7 @@ variable "vpc_id" {
 }
 
 variable "subnet_ids" {
-  description = "List of subnet IDs for the EKS worker nodes"
+  description = "List of subnet IDs for the EKS worker nodes."
   type        = list(string)
 
   validation {
@@ -49,7 +49,7 @@ variable "subnet_ids" {
 }
 
 variable "control_plane_subnet_ids" {
-  description = "List of subnet IDs for the EKS control plane ENIs. Defaults to subnet_ids if not specified"
+  description = "List of subnet IDs for the EKS control plane ENIs; defaults to subnet_ids."
   type        = list(string)
   default     = []
 }
@@ -59,19 +59,19 @@ variable "control_plane_subnet_ids" {
 ################################################################################
 
 variable "cluster_endpoint_private_access" {
-  description = "Enable private API server endpoint access"
+  description = "Enable private API server endpoint access."
   type        = bool
   default     = true
 }
 
 variable "cluster_endpoint_public_access" {
-  description = "Enable public API server endpoint access"
+  description = "Enable public API server endpoint access."
   type        = bool
   default     = false
 }
 
 variable "cluster_endpoint_public_access_cidrs" {
-  description = "List of CIDR blocks allowed to access the public API server endpoint"
+  description = "List of CIDR blocks allowed to access the public API server endpoint."
   type        = list(string)
   default     = ["0.0.0.0/0"]
 
@@ -86,13 +86,13 @@ variable "cluster_endpoint_public_access_cidrs" {
 ################################################################################
 
 variable "enable_cluster_encryption" {
-  description = "Enable envelope encryption for Kubernetes secrets using KMS"
+  description = "Enable envelope encryption for Kubernetes secrets using KMS."
   type        = bool
   default     = true
 }
 
 variable "kms_key_arn" {
-  description = "ARN of an existing KMS key for cluster encryption. If null and encryption is enabled, a new key will be created"
+  description = "ARN of an existing KMS key for cluster encryption; a new key is created if null."
   type        = string
   default     = null
 
@@ -107,7 +107,7 @@ variable "kms_key_arn" {
 ################################################################################
 
 variable "cluster_log_types" {
-  description = "List of control plane logging types to enable"
+  description = "List of control plane logging types to enable."
   type        = list(string)
   default     = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
 
@@ -121,7 +121,7 @@ variable "cluster_log_types" {
 }
 
 variable "cluster_log_retention_days" {
-  description = "Number of days to retain cluster logs in CloudWatch"
+  description = "Number of days to retain cluster logs in CloudWatch."
   type        = number
   default     = 90
 
@@ -136,7 +136,7 @@ variable "cluster_log_retention_days" {
 ################################################################################
 
 variable "managed_node_groups" {
-  description = "Map of managed node group configurations"
+  description = "Map of managed node group configurations."
   type = map(object({
     name           = string
     instance_types = list(string)
@@ -187,7 +187,7 @@ variable "managed_node_groups" {
 ################################################################################
 
 variable "fargate_profiles" {
-  description = "Map of Fargate profile configurations"
+  description = "Map of Fargate profile configurations."
   type = map(object({
     name = string
     selectors = list(object({
@@ -212,7 +212,7 @@ variable "fargate_profiles" {
 ################################################################################
 
 variable "cluster_addons" {
-  description = "Map of EKS cluster add-on configurations"
+  description = "Map of EKS cluster add-on configurations."
   type = map(object({
     addon_version        = optional(string)
     resolve_conflicts    = optional(string, "OVERWRITE")
@@ -234,7 +234,7 @@ variable "cluster_addons" {
 ################################################################################
 
 variable "enable_irsa" {
-  description = "Enable IAM Roles for Service Accounts (IRSA) via OIDC provider"
+  description = "Enable IAM Roles for Service Accounts (IRSA) via OIDC provider."
   type        = bool
   default     = true
 }
@@ -244,7 +244,7 @@ variable "enable_irsa" {
 ################################################################################
 
 variable "access_entries" {
-  description = "Map of EKS access entries for cluster authentication"
+  description = "Map of EKS access entries for cluster authentication."
   type = map(object({
     principal_arn     = string
     kubernetes_groups = optional(list(string), [])
@@ -273,7 +273,7 @@ variable "access_entries" {
 ################################################################################
 
 variable "tags" {
-  description = "Map of tags to apply to all resources"
+  description = "Map of tags to apply to all resources."
   type        = map(string)
   default     = {}
 }

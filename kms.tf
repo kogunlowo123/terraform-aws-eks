@@ -5,27 +5,26 @@
 resource "aws_kms_key" "eks" {
   count = var.enable_cluster_encryption && var.kms_key_arn == null ? 1 : 0
 
-  description             = "KMS key for EKS cluster ${local.cluster_name} envelope encryption of Kubernetes secrets"
+  description             = "KMS key for EKS cluster ${var.cluster_name} envelope encryption of Kubernetes secrets"
   deletion_window_in_days = 30
   enable_key_rotation     = true
   policy                  = data.aws_iam_policy_document.kms_key[0].json
 
-  tags = merge(local.common_tags, {
-    Name = "${local.cluster_name}-eks-encryption"
+  tags = merge(var.tags, {
+    Name = "${var.cluster_name}-eks-encryption"
   })
 }
 
 resource "aws_kms_alias" "eks" {
   count = var.enable_cluster_encryption && var.kms_key_arn == null ? 1 : 0
 
-  name          = "alias/eks/${local.cluster_name}"
+  name          = "alias/eks/${var.cluster_name}"
   target_key_id = aws_kms_key.eks[0].key_id
 }
 
 data "aws_iam_policy_document" "kms_key" {
   count = var.enable_cluster_encryption && var.kms_key_arn == null ? 1 : 0
 
-  # Key owner - full admin access
   statement {
     sid    = "KeyOwnerFullAccess"
     effect = "Allow"
@@ -40,7 +39,6 @@ data "aws_iam_policy_document" "kms_key" {
     }
   }
 
-  # Allow EKS cluster role to use the key
   statement {
     sid    = "AllowEKSClusterRole"
     effect = "Allow"
@@ -62,7 +60,6 @@ data "aws_iam_policy_document" "kms_key" {
     }
   }
 
-  # Allow CloudWatch Logs to use the key
   statement {
     sid    = "AllowCloudWatchLogs"
     effect = "Allow"
@@ -83,7 +80,7 @@ data "aws_iam_policy_document" "kms_key" {
     condition {
       test     = "ArnLike"
       variable = "kms:EncryptionContext:aws:logs:arn"
-      values   = ["arn:${data.aws_partition.current.partition}:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/eks/${local.cluster_name}/*"]
+      values   = ["arn:${data.aws_partition.current.partition}:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:/aws/eks/${var.cluster_name}/*"]
     }
   }
 }

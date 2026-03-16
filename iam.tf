@@ -16,13 +16,13 @@ data "aws_iam_policy_document" "cluster_assume_role" {
 }
 
 resource "aws_iam_role" "cluster" {
-  name = "${local.cluster_name}-cluster-role"
+  name = "${var.cluster_name}-cluster-role"
   path = "/"
 
   assume_role_policy    = data.aws_iam_policy_document.cluster_assume_role.json
   force_detach_policies = true
 
-  tags = local.common_tags
+  tags = var.tags
 }
 
 resource "aws_iam_role_policy_attachment" "cluster_policy" {
@@ -51,17 +51,17 @@ data "aws_iam_policy_document" "cluster_kms" {
       "kms:ListGrants",
       "kms:DescribeKey",
     ]
-    resources = [local.kms_key_arn]
+    resources = [var.kms_key_arn != null ? var.kms_key_arn : aws_kms_key.eks[0].arn]
   }
 }
 
 resource "aws_iam_policy" "cluster_kms" {
   count = var.enable_cluster_encryption ? 1 : 0
 
-  name   = "${local.cluster_name}-cluster-kms"
+  name   = "${var.cluster_name}-cluster-kms"
   policy = data.aws_iam_policy_document.cluster_kms[0].json
 
-  tags = local.common_tags
+  tags = var.tags
 }
 
 resource "aws_iam_role_policy_attachment" "cluster_kms" {
@@ -91,13 +91,13 @@ data "aws_iam_policy_document" "node_group_assume_role" {
 resource "aws_iam_role" "node_group" {
   for_each = var.managed_node_groups
 
-  name = "${local.cluster_name}-${each.value.name}-node-role"
+  name = "${var.cluster_name}-${each.value.name}-node-role"
   path = "/"
 
   assume_role_policy    = data.aws_iam_policy_document.node_group_assume_role.json
   force_detach_policies = true
 
-  tags = merge(local.common_tags, each.value.tags)
+  tags = merge(var.tags, each.value.tags)
 }
 
 resource "aws_iam_role_policy_attachment" "node_group_worker" {
@@ -146,19 +146,19 @@ data "aws_iam_policy_document" "fargate_assume_role" {
     condition {
       test     = "ArnLike"
       variable = "aws:SourceArn"
-      values   = ["arn:${data.aws_partition.current.partition}:eks:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:fargateprofile/${local.cluster_name}/*"]
+      values   = ["arn:${data.aws_partition.current.partition}:eks:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:fargateprofile/${var.cluster_name}/*"]
     }
   }
 }
 
 resource "aws_iam_role" "fargate" {
-  name = "${local.cluster_name}-fargate-role"
+  name = "${var.cluster_name}-fargate-role"
   path = "/"
 
   assume_role_policy    = data.aws_iam_policy_document.fargate_assume_role.json
   force_detach_policies = true
 
-  tags = local.common_tags
+  tags = var.tags
 }
 
 resource "aws_iam_role_policy_attachment" "fargate_pod_execution" {
@@ -177,5 +177,5 @@ resource "aws_iam_openid_connect_provider" "eks" {
   thumbprint_list = data.tls_certificate.eks[0].certificates[*].sha1_fingerprint
   url             = aws_eks_cluster.this.identity[0].oidc[0].issuer
 
-  tags = local.common_tags
+  tags = var.tags
 }

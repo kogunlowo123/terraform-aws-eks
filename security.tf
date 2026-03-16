@@ -3,12 +3,12 @@
 ################################################################################
 
 resource "aws_security_group" "cluster" {
-  name_prefix = "${local.cluster_name}-cluster-"
+  name_prefix = "${var.cluster_name}-cluster-"
   description = "Security group for EKS cluster control plane"
   vpc_id      = var.vpc_id
 
-  tags = merge(local.common_tags, {
-    Name = "${local.cluster_name}-cluster-sg"
+  tags = merge(var.tags, {
+    Name = "${var.cluster_name}-cluster-sg"
   })
 
   lifecycle {
@@ -41,13 +41,13 @@ resource "aws_security_group_rule" "cluster_ingress_nodes_https" {
 ################################################################################
 
 resource "aws_security_group" "node" {
-  name_prefix = "${local.cluster_name}-node-"
+  name_prefix = "${var.cluster_name}-node-"
   description = "Security group for EKS worker nodes"
   vpc_id      = var.vpc_id
 
-  tags = merge(local.common_tags, {
-    Name                                          = "${local.cluster_name}-node-sg"
-    "kubernetes.io/cluster/${local.cluster_name}" = "owned"
+  tags = merge(var.tags, {
+    Name                                          = "${var.cluster_name}-node-sg"
+    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
   })
 
   lifecycle {
